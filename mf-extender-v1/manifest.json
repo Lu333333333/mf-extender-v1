@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "MF Extender v1",
+  "version": "1.1.0",
+  "description": "マネーフォワード クラウドの機能を拡張します。ストレージ・クラウドBoxの一括ダウンロード、仕訳帳・総勘定元帳の月次セレクト入力に対応。機能ごとのオンオフ切り替え可。",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.moneyforward.com/storage*"],
+      "js": ["common/feature-flags.js", "lib/jszip.min.js", "storage/content.js"],
+      "css": ["storage/content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://box.moneyforward.com/files*"],
+      "js": ["common/feature-flags.js", "lib/jszip.min.js", "box/content.js"],
+      "css": ["box/content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://accounting.moneyforward.com/*"],
+      "js": ["common/feature-flags.js", "journals/content.js"],
+      "css": ["journals/content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

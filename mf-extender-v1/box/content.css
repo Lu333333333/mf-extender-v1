@@ -1,0 +1,68 @@
+/* 選択中の行のハイライト（classの付け外しのみ・DOM構造は変更しない） */
+tr.mfbox-row-selected {
+  background-color: #eaf1fb !important;
+  outline: 1px solid #2e72d8;
+  outline-offset: -1px;
+}
+
+/* フローティングパネル（body直下・Reactとは完全に独立） */
+#mfbox-dl-panel {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 99999;
+  display: none; /* JSで制御 */
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  font-family: inherit;
+}
+
+#mfbox-dl-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e72d8;
+  white-space: nowrap;
+}
+
+#mfbox-dl-clear {
+  font-family: inherit;
+  font-size: 12px;
+  color: #595959;
+  background: none;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#mfbox-dl-clear:hover {
+  background-color: #f5f5f5;
+}
+
+#mfbox-dl-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  background-color: #2e72d8;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#mfbox-dl-btn:hover:not(:disabled) {
+  background-color: #1a5bbf;
+}
+
+#mfbox-dl-btn:disabled {
+  background-color: #a0bcec;
+  cursor: not-allowed;
+}

@@ -1,0 +1,27 @@
+.mfex-month-select {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  margin-left: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  color: #262626;
+  background-color: #ffffff;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  vertical-align: middle;
+  /* フィールド自体の高さに合わせる */
+  box-sizing: border-box;
+}
+
+.mfex-month-select:hover {
+  border-color: #008BF2;
+}
+
+.mfex-month-select:focus {
+  outline: none;
+  border-color: #008BF2;
+  box-shadow: 0 0 0 2px rgba(0, 139, 242, 0.15);
+}

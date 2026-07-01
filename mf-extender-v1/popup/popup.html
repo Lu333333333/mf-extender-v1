@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>MF Extender v1 設定</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="mfex-header">
+    <span class="mfex-header-title">MF Extender v1</span>
+  </header>
+
+  <main class="mfex-list">
+    <div class="mfex-item">
+      <div class="mfex-item-text">
+        <span class="mfex-item-title">ストレージ 一括ダウンロード</span>
+        <span class="mfex-item-desc">書類管理 → ストレージ画面</span>
+      </div>
+      <label class="mfex-switch">
+        <input type="checkbox" id="toggle-storage" />
+        <span class="mfex-slider"></span>
+      </label>
+    </div>
+
+    <div class="mfex-item">
+      <div class="mfex-item-text">
+        <span class="mfex-item-title">クラウドBox 一括ダウンロード</span>
+        <span class="mfex-item-desc">box.moneyforward.com/files</span>
+      </div>
+      <label class="mfex-switch">
+        <input type="checkbox" id="toggle-box" />
+        <span class="mfex-slider"></span>
+      </label>
+    </div>
+
+    <div class="mfex-item">
+      <div class="mfex-item-text">
+        <span class="mfex-item-title">月次セレクトボックス</span>
+        <span class="mfex-item-desc">仕訳帳・総勘定元帳など</span>
+      </div>
+      <label class="mfex-switch">
+        <input type="checkbox" id="toggle-journals" />
+        <span class="mfex-slider"></span>
+      </label>
+    </div>
+  </main>
+
+  <footer class="mfex-footer">
+    <span id="status-text" class="mfex-status"></span>
+    <span class="mfex-version">v1.0.0</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
