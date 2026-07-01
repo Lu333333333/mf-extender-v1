@@ -1,12 +1,20 @@
-/* クラウドBox 一括ダウンロード - content script */
+/* クラウドBox 一括ダウンロード／一括ゴミ箱移動 - content script */
 (() => {
   "use strict";
 
   const DOWNLOAD_URL_PREFIX = "/frontend/v3/files/";
   const DOWNLOAD_URL_SUFFIX = "/download";
+
+  // 「ゴミ箱に入れる」API（DevToolsのNetworkタブで確認済み・2026/07 時点）
+  //   POST /frontend/v3/files/{uuid}/trash （リクエストボディなし）
+  //   ※ 完全削除ではなく、ゴミ箱への移動（復元可能）
+  const TRASH_URL_PREFIX = "/frontend/v3/files/";
+  const TRASH_URL_SUFFIX = "/trash";
+  const TRASH_METHOD = "POST";
+
   const PANEL_ID = "mfbox-dl-panel";
   const SELECTED_CLASS = "mfbox-row-selected";
-  const CHUNK_SIZE = 8; // 並列ダウンロード数
+  const CHUNK_SIZE = 8; // 並列処理数（ダウンロード・削除共通）
 
   const MIME_TO_EXT = {
     "application/pdf": ".pdf",
@@ -25,6 +33,7 @@
   };
 
   let isDownloading = false;
+  let isDeleting = false;
   let selectedUuids = new Set();
   let lastClickedIndex = null;
 
@@ -139,9 +148,16 @@
     dlBtn.textContent = "一括ダウンロード";
     dlBtn.addEventListener("click", onBulkDownloadClick);
 
+    const trashBtn = document.createElement("button");
+    trashBtn.id = "mfbox-dl-delete-btn";
+    trashBtn.type = "button";
+    trashBtn.textContent = "ゴミ箱に入れる";
+    trashBtn.addEventListener("click", onBulkTrashClick);
+
     panel.appendChild(countLabel);
     panel.appendChild(clearBtn);
     panel.appendChild(dlBtn);
+    panel.appendChild(trashBtn);
     document.body.appendChild(panel);
   }
 
@@ -149,18 +165,21 @@
     const panel = document.getElementById(PANEL_ID);
     const countLabel = document.getElementById("mfbox-dl-count");
     const dlBtn = document.getElementById("mfbox-dl-btn");
+    const trashBtn = document.getElementById("mfbox-dl-delete-btn");
     if (!panel) return;
 
     const count = selectedUuids.size;
+    const busy = isDownloading || isDeleting;
     panel.style.display = count > 0 ? "flex" : "none";
     if (countLabel) countLabel.textContent = `${count}件選択中`;
-    if (dlBtn) dlBtn.disabled = isDownloading || count === 0;
+    if (dlBtn) dlBtn.disabled = busy || count === 0;
+    if (trashBtn) trashBtn.disabled = busy || count === 0;
   }
 
   // ダウンロード処理
 
   async function onBulkDownloadClick() {
-    if (isDownloading) return;
+    if (isDownloading || isDeleting) return;
 
     const dlBtn = document.getElementById("mfbox-dl-btn");
     if (!dlBtn || dlBtn.disabled) return;
@@ -225,6 +244,96 @@
     } finally {
       isDownloading = false;
       if (dlBtn) dlBtn.textContent = "一括ダウンロード";
+      syncPanel();
+    }
+  }
+
+  // ゴミ箱に入れる処理（完全削除ではなく復元可能な操作）
+
+  async function onBulkTrashClick() {
+    if (isDownloading || isDeleting) return;
+
+    const trashBtn = document.getElementById("mfbox-dl-delete-btn");
+    if (!trashBtn || trashBtn.disabled) return;
+
+    const targets = getFileRows()
+      .map(({ link }) => extractFileInfo(link))
+      .filter((info) => info && selectedUuids.has(info.uuid));
+
+    if (targets.length === 0) return;
+
+    // 実行前の確認ダイアログ（件数・ファイル名一覧を表示）※必須
+    // ゴミ箱への移動＝復元可能な操作のため、「取り消せません」ではなく
+    // ゴミ箱に入る旨を明示する。
+    const confirmMessage =
+      `以下の${targets.length}件のファイルをゴミ箱に入れます。よろしいですか？\n` +
+      "（ゴミ箱から復元できます）\n\n" +
+      targets.map((f) => `・${f.name}`).join("\n");
+    if (!confirm(confirmMessage)) return;
+
+    isDeleting = true;
+    trashBtn.disabled = true;
+    trashBtn.textContent = `ゴミ箱に移動中 (0/${targets.length})`;
+    // ダウンロードボタンも操作不能にする（syncPanelで一括制御）
+    syncPanel();
+
+    const failures = [];
+    let completed = 0;
+
+    try {
+      // CHUNK_SIZE件ずつ並列実行
+      for (let i = 0; i < targets.length; i += CHUNK_SIZE) {
+        const chunk = targets.slice(i, i + CHUNK_SIZE);
+        await Promise.all(
+          chunk.map(async (file) => {
+            try {
+              const url = `${TRASH_URL_PREFIX}${file.uuid}${TRASH_URL_SUFFIX}`;
+              const res = await fetch(url, {
+                method: TRASH_METHOD,
+                credentials: "include",
+                headers: { Accept: "*/*" },
+              });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              // 成功：選択状態からも除去
+              selectedUuids.delete(file.uuid);
+            } catch (err) {
+              failures.push({ name: file.name, error: err.message || String(err) });
+            } finally {
+              completed++;
+              if (trashBtn) trashBtn.textContent = `ゴミ箱に移動中 (${completed}/${targets.length})`;
+            }
+          })
+        );
+      }
+
+      const successCount = targets.length - failures.length;
+
+      if (successCount === 0) {
+        alert("ゴミ箱への移動に失敗しました。ページを再読み込みしてから、もう一度お試しください。");
+        return;
+      }
+
+      if (failures.length > 0) {
+        alert(
+          `${successCount}件のファイルをゴミ箱に入れました。\n` +
+          `${failures.length}件は失敗しました。\n` +
+          failures.map((f) => `・${f.name}`).join("\n") +
+          "\n\n画面を再読み込みします。"
+        );
+      } else {
+        alert(`${successCount}件のファイルをゴミ箱に入れました。\n\n画面を再読み込みします。`);
+      }
+
+      // このスクリプトはReact管理下のDOM/状態を直接操作しない方針のため、
+      // 実行後は一覧を最新化するためにページを再読み込みする。
+      location.reload();
+    } catch (err) {
+      console.error("[クラウドBoxゴミ箱に入れる] エラー:", err);
+      alert("処理中にエラーが発生しました。コンソールをご確認ください。");
+    } finally {
+      isDeleting = false;
+      if (trashBtn) trashBtn.textContent = "ゴミ箱に入れる";
+      applySelectionClasses();
       syncPanel();
     }
   }

@@ -66,3 +66,27 @@ tr.mfbox-row-selected {
   background-color: #a0bcec;
   cursor: not-allowed;
 }
+
+/* 削除ボタン（危険操作のため赤系で明確に区別） */
+#mfbox-dl-delete-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #d4380d;
+  background-color: #ffffff;
+  border: 1px solid #d4380d;
+  border-radius: 6px;
+  padding: 5px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#mfbox-dl-delete-btn:hover:not(:disabled) {
+  background-color: #fff1f0;
+}
+
+#mfbox-dl-delete-btn:disabled {
+  color: #ffb3a3;
+  border-color: #ffccc0;
+  cursor: not-allowed;
+}
