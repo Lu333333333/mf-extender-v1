@@ -147,6 +147,9 @@
 
     insertSelect(fromAnchor, SELECT_FROM_ID, (month, year) => {
       setInputValue(cfg.fromFieldId, formatDate(year, month, 1));
+      // 開始月選択時、終了日も未入力の初期状態としてデフォルトで同月末日にする
+      // （終了月セレクトで後から個別に選び直せば上書きされる）
+      setInputValue(cfg.toFieldId, formatDate(year, month, lastDayOfMonth(year, month)));
     });
     insertSelect(toAnchor, SELECT_TO_ID, (month, year) => {
       setInputValue(cfg.toFieldId, formatDate(year, month, lastDayOfMonth(year, month)));
